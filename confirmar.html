@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="info-page">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Confirmação de presença no casamento de Thalita e Fábio">
+  <title>Confirmar Presença — Thalita e Fábio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Great+Vibes&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="info-app rsvp-app">
+    <header class="gifts-header">
+      <a class="gifts-back" id="rsvp-back" href="links.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6"/>
+        </svg>
+        Voltar ao convite
+      </a>
+      <div class="gifts-brand">
+        <img src="assets/images/monograma.png" alt="Thalita e Fábio">
+      </div>
+    </header>
+
+    <section class="gifts-hero">
+      <p class="gifts-kicker">Thalita &amp; Fábio</p>
+      <h1 class="gifts-title">Confirmar presença</h1>
+      <p class="gifts-subtitle">Esperamos por vocês</p>
+      <div class="gifts-divider" aria-hidden="true"></div>
+    </section>
+
+    <section id="rsvp-content" aria-live="polite">
+      <div class="rsvp-card rsvp-loading">
+        <span class="rsvp-spinner" aria-hidden="true"></span>
+        <p>Carregando seu convite…</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="rsvp.js"></script>
+</body>
+</html>

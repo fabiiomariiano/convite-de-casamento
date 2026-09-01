@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="info-page">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Administração do RSVP — Thalita e Fábio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Great+Vibes&family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="info-app admin-app">
+    <header class="gifts-header">
+      <a class="gifts-back" href="links.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" aria-hidden="true">
+          <path d="M15 6l-6 6 6 6"/>
+        </svg>
+        Voltar ao convite
+      </a>
+      <div class="gifts-brand">
+        <img src="assets/images/monograma.png" alt="Thalita e Fábio">
+      </div>
+    </header>
+
+    <section class="gifts-hero admin-hero">
+      <p class="gifts-kicker">Área reservada</p>
+      <h1 class="gifts-title">Confirmações</h1>
+      <p class="gifts-subtitle">Painel dos noivos</p>
+      <div class="gifts-divider" aria-hidden="true"></div>
+    </section>
+
+    <section id="admin-content" aria-live="polite">
+      <div class="rsvp-card rsvp-loading">
+        <span class="rsvp-spinner" aria-hidden="true"></span>
+        <p>Carregando painel…</p>
+      </div>
+    </section>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>
