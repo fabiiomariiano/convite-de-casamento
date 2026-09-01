@@ -226,6 +226,16 @@ const weddingConfig = {
         { name: "Branco da noiva", hex: "#ffffff", avoid: true },
       ],
     },
+    bridesmaidColors: {
+      title: "Cores das madrinhas",
+      text: "Fúcsia, laranja, coral e amarelo fazem parte do look das madrinhas. Pedimos que evitem essas cores para não confundir com o time da noiva.",
+      swatches: [
+        { name: "Fúcsia", hex: "#E91E8C", avoid: true },
+        { name: "Laranja", hex: "#FF8C42", avoid: true },
+        { name: "Coral", hex: "#FF6F61", avoid: true },
+        { name: "Amarelo", hex: "#F4C430", avoid: true },
+      ],
+    },
     poolNote: {
       title: "A piscina não estará liberada",
       text: "Traje de banho, canga e clima de resort ficam para outro capítulo. Aqui a festa é outra: cerimônia, brinde e pista, de preferência com os pés no chão, não na água.",
@@ -1758,8 +1768,22 @@ class DressCodePage {
     this.render();
   }
 
+  renderSwatches(swatches) {
+    return swatches
+      .map(
+        (swatch) => `
+        <div class="color-swatch${swatch.avoid ? " is-avoid" : ""}">
+          <span class="color-swatch-dot" style="background:${swatch.hex}"></span>
+          <span class="color-swatch-name">${swatch.name}</span>
+        </div>
+      `,
+      )
+      .join("");
+  }
+
   render() {
-    const { intro, notes, colors, poolNote, looksTitle, looks } = this.page;
+    const { intro, notes, colors, bridesmaidColors, poolNote, looksTitle, looks } =
+      this.page;
 
     const notesHtml = notes
       .map(
@@ -1772,16 +1796,10 @@ class DressCodePage {
       )
       .join("");
 
-    const swatchesHtml = colors.swatches
-      .map(
-        (swatch) => `
-        <div class="color-swatch${swatch.avoid ? " is-avoid" : ""}">
-          <span class="color-swatch-dot" style="background:${swatch.hex}"></span>
-          <span class="color-swatch-name">${swatch.name}</span>
-        </div>
-      `,
-      )
-      .join("");
+    const swatchesHtml = this.renderSwatches(colors.swatches);
+    const bridesmaidSwatchesHtml = this.renderSwatches(
+      bridesmaidColors.swatches,
+    );
 
     const looksHtml = looks
       .map(
@@ -1806,10 +1824,18 @@ class DressCodePage {
 
       <section class="guide-stack">${notesHtml}</section>
 
-      <section class="guide-card">
-        <h2>${colors.title}</h2>
-        <p>${colors.text}</p>
-        <div class="color-swatches">${swatchesHtml}</div>
+      <section class="guide-stack">
+        <section class="guide-card">
+          <h2>${colors.title}</h2>
+          <p>${colors.text}</p>
+          <div class="color-swatches">${swatchesHtml}</div>
+        </section>
+
+        <section class="guide-card">
+          <h2>${bridesmaidColors.title}</h2>
+          <p>${bridesmaidColors.text}</p>
+          <div class="color-swatches">${bridesmaidSwatchesHtml}</div>
+        </section>
       </section>
 
       <section class="guide-highlight">

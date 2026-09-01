@@ -1922,7 +1922,7 @@ html.info-page body.is-modal-open {
 }
 
 .guide-highlight h2 {
-  /* color: var(--color-gold); */
+  color: white;
 }
 
 .dress-looks {
