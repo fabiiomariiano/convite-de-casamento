@@ -96,7 +96,9 @@ async function loadFamilies() {
       const family = familySnapshot.data();
       const memberIds = Array.isArray(family.memberIds) ? family.memberIds : [];
       const memberSnapshots = await Promise.all(
-        memberIds.map((memberId) => memberRef(familySnapshot.id, memberId).get()),
+        memberIds.map((memberId) =>
+          memberRef(familySnapshot.id, memberId).get(),
+        ),
       );
       return {
         token: familySnapshot.id,
@@ -132,7 +134,9 @@ function familyCard(family) {
     .join("");
   const url = invitationUrl(family.token);
   const whatsappText = encodeURIComponent(
-    `Olá, ${family.headName}! Ficaremos muito felizes em celebrar com vocês. Confirme a presença de cada pessoa convidada neste link: ${url}`,
+    `Olá, ${family.headName}! Será uma alegria compartilhar esse dia tão especial com você! 
+Confirme sua presença e, caso não possa comparecer, fique à vontade para nos avisar. Sua resposta é muito importante para nós!
+Todos os detalhes no seu convite digital no link: ${url}`,
   );
 
   return `
@@ -199,7 +203,9 @@ function renderDashboard() {
     <p class="rsvp-feedback" id="admin-feedback" role="status"></p>
   `;
 
-  content.querySelector("#sign-out").addEventListener("click", () => auth.signOut());
+  content
+    .querySelector("#sign-out")
+    .addEventListener("click", () => auth.signOut());
   content
     .querySelector("#new-family")
     .addEventListener("click", () => renderFamilyForm());
