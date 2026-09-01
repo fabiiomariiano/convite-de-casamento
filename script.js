@@ -309,14 +309,21 @@ function getInviteToken() {
   return sessionStorage.getItem("weddingInviteToken") || "";
 }
 
-function getLinksPageUrl() {
+function withInviteToken(url) {
   const token = getInviteToken();
-  return token ? `links.html?c=${encodeURIComponent(token)}` : "links.html";
+  if (!token || /^https?:\/\//i.test(url)) return url;
+
+  const destination = new URL(url, window.location.href);
+  destination.searchParams.set("c", token);
+  return `${destination.pathname.split("/").pop()}${destination.search}${destination.hash}`;
+}
+
+function getLinksPageUrl() {
+  return withInviteToken("links.html");
 }
 
 function getIndexPageUrl() {
-  const token = getInviteToken();
-  return token ? `index.html?c=${encodeURIComponent(token)}` : "index.html";
+  return withInviteToken("index.html");
 }
 
 const BOOK_PAGE_COUNT = 5;
@@ -352,12 +359,7 @@ function createPageIndicators(activeIndex, totalPages = BOOK_PAGE_COUNT) {
 }
 
 function buildLinkItem(link) {
-  const inviteToken = getInviteToken();
-  const passesInviteToken = link.id === "rsvp" || link.id === "gift";
-  const url =
-    passesInviteToken && inviteToken
-      ? `${link.url}?c=${encodeURIComponent(inviteToken)}`
-      : link.url;
+  const url = withInviteToken(link.url);
   const isExternal = /^https?:\/\//i.test(url);
   const targetAttrs = isExternal
     ? 'target="_blank" rel="noopener noreferrer"'

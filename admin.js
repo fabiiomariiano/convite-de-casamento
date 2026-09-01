@@ -25,7 +25,7 @@ function randomId(byteLength = 18) {
 }
 
 function invitationUrl(token) {
-  const url = new URL("confirmar.html", window.location.href);
+  const url = new URL("index.html", window.location.href);
   url.search = `?c=${encodeURIComponent(token)}`;
   return url.href;
 }
