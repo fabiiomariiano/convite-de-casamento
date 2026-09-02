@@ -2424,7 +2424,8 @@ html.info-page body.is-modal-open {
   margin-bottom: 1.5rem;
 }
 
-.admin-totals > div {
+.admin-totals > div,
+.admin-total-filter {
   display: grid;
   justify-items: center;
   gap: 0.1rem;
@@ -2432,6 +2433,24 @@ html.info-page body.is-modal-open {
   border-radius: 12px;
   padding: 0.85rem;
   background: #fff;
+}
+
+.admin-total-filter {
+  width: 100%;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.admin-total-filter:hover,
+.admin-total-filter.is-active {
+  border-color: var(--color-gold);
+  box-shadow: 0 0 0 2px rgba(150, 116, 83, 0.12);
+}
+
+.admin-total-filter:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 2px;
 }
 
 .admin-totals strong {
@@ -2455,6 +2474,39 @@ html.info-page body.is-modal-open {
 
 .admin-list-heading h2 {
   font-size: 1.35rem;
+}
+
+.admin-search {
+  display: grid;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+  color: #6b5a48;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
+}
+
+.admin-search input {
+  width: 100%;
+  border: 1px solid rgba(150, 116, 83, 0.3);
+  border-radius: 10px;
+  padding: 0.8rem 0.9rem;
+  background: #fff;
+  color: var(--color-text);
+  font: inherit;
+}
+
+.admin-search input:focus {
+  border-color: var(--color-gold);
+  outline: 2px solid rgba(150, 116, 83, 0.16);
+  outline-offset: 1px;
+}
+
+.admin-results {
+  min-height: 1.25rem;
+  margin: 0 0 0.75rem;
+  color: #6b5a48;
+  font-family: var(--font-sans);
+  font-size: 0.68rem;
 }
 
 .admin-family-list {

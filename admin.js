@@ -3,6 +3,8 @@ let auth;
 let db;
 let families = [];
 let editingToken = null;
+let activeStatusFilter = null;
+let familySearchQuery = "";
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -172,6 +174,77 @@ function getTotals() {
     );
 }
 
+function normalizeSearchText(value) {
+  return String(value || "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("pt-BR");
+}
+
+function familyMatchesStatus(family, status) {
+  if (!status) return true;
+  return family.members.some((member) => {
+    if (status === "yes") return member.attending === true;
+    if (status === "no") return member.attending === false;
+    return typeof member.attending !== "boolean";
+  });
+}
+
+function filteredFamilies() {
+  const search = normalizeSearchText(familySearchQuery.trim());
+
+  return families.filter((family) => {
+    const matchesSearch = !search ||
+      [family.familyName, ...family.members.map((member) => member.name)]
+        .some((name) => normalizeSearchText(name).includes(search));
+
+    return matchesSearch && familyMatchesStatus(family, activeStatusFilter);
+  });
+}
+
+function bindFamilyCardActions(container) {
+  container.querySelectorAll("[data-edit-family]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const token = button.closest("[data-family-token]").dataset.familyToken;
+      renderFamilyForm(families.find((family) => family.token === token));
+    });
+  });
+  container.querySelectorAll("[data-delete-family]").forEach((button) => {
+    button.addEventListener("click", () => {
+      const token = button.closest("[data-family-token]").dataset.familyToken;
+      deleteFamily(families.find((family) => family.token === token));
+    });
+  });
+  container.querySelectorAll("[data-copy-link]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copyLink);
+        button.textContent = "Link copiado";
+        setTimeout(() => (button.textContent = "Copiar link"), 1800);
+      } catch {
+        window.prompt("Copie o link:", button.dataset.copyLink);
+      }
+    });
+  });
+}
+
+function renderFamilyList() {
+  const list = filteredFamilies();
+  const listContainer = content.querySelector("#admin-family-list");
+  const results = content.querySelector("#admin-results");
+  const hasFilters = activeStatusFilter || familySearchQuery.trim();
+
+  results.textContent = hasFilters
+    ? `${list.length} de ${families.length} família${families.length === 1 ? "" : "s"}`
+    : "";
+  listContainer.innerHTML = list.length
+    ? list.map(familyCard).join("")
+    : families.length === 0
+      ? `<div class="rsvp-card rsvp-message"><h2>Nenhuma família cadastrada</h2><p>Use “Nova família” para criar o primeiro convite.</p></div>`
+      : `<div class="rsvp-card rsvp-message"><h2>Nenhuma família encontrada</h2><p>Ajuste os filtros ou a busca para ver outros convites.</p></div>`;
+  bindFamilyCardActions(listContainer);
+}
+
 function renderDashboard() {
   editingToken = null;
   const totals = getTotals();
@@ -184,22 +257,21 @@ function renderDashboard() {
       </div>
     </div>
     <section class="admin-totals" aria-label="Resumo das confirmações">
-      <div><strong>${totals.yes}</strong><span>Vão</span></div>
-      <div><strong>${totals.no}</strong><span>Não vão</span></div>
-      <div><strong>${totals.pending}</strong><span>Pendentes</span></div>
+      <button class="admin-total-filter ${activeStatusFilter === "yes" ? "is-active" : ""}" type="button" data-status-filter="yes" aria-pressed="${activeStatusFilter === "yes"}"><strong>${totals.yes}</strong><span>Vão</span></button>
+      <button class="admin-total-filter ${activeStatusFilter === "no" ? "is-active" : ""}" type="button" data-status-filter="no" aria-pressed="${activeStatusFilter === "no"}"><strong>${totals.no}</strong><span>Não vão</span></button>
+      <button class="admin-total-filter ${activeStatusFilter === "pending" ? "is-active" : ""}" type="button" data-status-filter="pending" aria-pressed="${activeStatusFilter === "pending"}"><strong>${totals.pending}</strong><span>Pendentes</span></button>
       <div><strong>${families.length}</strong><span>Famílias</span></div>
     </section>
     <div class="admin-list-heading">
       <h2>Famílias convidadas</h2>
       <button class="rsvp-button" type="button" id="new-family">Nova família</button>
     </div>
-    <section class="admin-family-list">
-      ${
-        families.length
-          ? families.map(familyCard).join("")
-          : '<div class="rsvp-card rsvp-message"><h2>Nenhuma família cadastrada</h2><p>Use “Nova família” para criar o primeiro convite.</p></div>'
-      }
-    </section>
+    <label class="admin-search" for="family-search">
+      <span>Pesquisar família ou convidado</span>
+      <input id="family-search" type="search" value="${escapeHtml(familySearchQuery)}" placeholder="Digite um nome">
+    </label>
+    <p class="admin-results" id="admin-results" aria-live="polite"></p>
+    <section class="admin-family-list" id="admin-family-list"></section>
     <p class="rsvp-feedback" id="admin-feedback" role="status"></p>
   `;
 
@@ -209,29 +281,18 @@ function renderDashboard() {
   content
     .querySelector("#new-family")
     .addEventListener("click", () => renderFamilyForm());
-  content.querySelectorAll("[data-edit-family]").forEach((button) => {
+  content.querySelectorAll("[data-status-filter]").forEach((button) => {
     button.addEventListener("click", () => {
-      const token = button.closest("[data-family-token]").dataset.familyToken;
-      renderFamilyForm(families.find((family) => family.token === token));
+      const status = button.dataset.statusFilter;
+      activeStatusFilter = activeStatusFilter === status ? null : status;
+      renderDashboard();
     });
   });
-  content.querySelectorAll("[data-delete-family]").forEach((button) => {
-    button.addEventListener("click", () => {
-      const token = button.closest("[data-family-token]").dataset.familyToken;
-      deleteFamily(families.find((family) => family.token === token));
-    });
+  content.querySelector("#family-search").addEventListener("input", (event) => {
+    familySearchQuery = event.currentTarget.value;
+    renderFamilyList();
   });
-  content.querySelectorAll("[data-copy-link]").forEach((button) => {
-    button.addEventListener("click", async () => {
-      try {
-        await navigator.clipboard.writeText(button.dataset.copyLink);
-        button.textContent = "Link copiado";
-        setTimeout(() => (button.textContent = "Copiar link"), 1800);
-      } catch {
-        window.prompt("Copie o link:", button.dataset.copyLink);
-      }
-    });
-  });
+  renderFamilyList();
 }
 
 function memberInput(member = {}) {
