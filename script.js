@@ -66,6 +66,12 @@ const weddingConfig = {
       url: "presentes.html",
     },
     {
+      id: "message",
+      icon: "assets/icons/message.svg",
+      label: "Deixe sua mensagem",
+      url: "mensagens.html",
+    },
+    {
       id: "rsvp",
       icon: "assets/icons/rsvp.svg",
       label: "Confirmar Presenca",
@@ -113,17 +119,6 @@ const weddingConfig = {
       sectionTitle: "Cartão de crédito",
       sectionHint: "Pagamento seguro via Mercado Pago (com taxa de 3,99%)",
       buttonLabel: "Pagar no cartão",
-    },
-    message: {
-      sectionTitle: "Deixe uma mensagem",
-      sectionHint: "Agora, deixe-nos uma mensagem com carinho.",
-      placeholder: "Sua mensagem para os noivos...",
-      submitLabel: "Enviar",
-      success: "Mensagem enviada com carinho. Obrigado!",
-      error: "Não foi possível enviar agora. Tente novamente.",
-      empty: "Escreva uma mensagem antes de enviar.",
-      unavailable:
-        "O envio de mensagens ainda não está disponível. Tente mais tarde.",
     },
     items: [
       {
@@ -186,7 +181,33 @@ const weddingConfig = {
         image:
           "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800&q=80",
       },
+      {
+        title: "Um presente do seu jeito",
+        price: 80,
+        priceLabel: "O valor que seu coração quiser",
+        qrCode: "assets/images/qr-presente-livre.png",
+        copyPasteCode:
+          "00020126580014BR.GOV.BCB.PIX0136f7a02979-519b-4db7-a73e-ffbeae8ee56e5204000053039865802BR5925Fabio Mariano Costa Silva6009SAO PAULO62140510GfBXd8ZsWE6304CDC9",
+        image:
+          "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=800&q=80",
+      },
     ],
+  },
+
+  messages: {
+    pageTitle: "Mensagens",
+    pageSubtitle: "Palavras que ficam",
+    intro:
+      "Deixe-nos uma mensagem com carinho. Vamos guardar cada palavra para ler e reler, lembrando de todo o afeto que nos acompanhou nesse dia tão especial. Pode enviar quantas mensagens quiser!",
+    placeholder: "Escreva aqui sua mensagem para nós...",
+    submitLabel: "Enviar mensagem",
+    success: "Mensagem enviada com carinho. Obrigado por fazer parte desse momento!",
+    error: "Não foi possível enviar agora. Tente novamente.",
+    empty: "Escreva uma mensagem antes de enviar.",
+    unavailable:
+      "O envio de mensagens ainda não está disponível. Tente mais tarde.",
+    giftTitle: "Mensagem carinhosa",
+    giftPrice: 80,
   },
 
   /* ------------------------------------------------------------
@@ -385,15 +406,9 @@ function buildLinkItem(link) {
 }
 
 function renderLinksGrid(links) {
-  const topRow = links.slice(0, 3);
-  const bottomRow = links.slice(3);
-  const topHtml = topRow.map(buildLinkItem).join("");
-  const bottomHtml = bottomRow.map(buildLinkItem).join("");
-
   return `
     <div class="links-grid">
-      ${topHtml}
-      <div class="links-grid-row2">${bottomHtml}</div>
+      ${links.map(buildLinkItem).join("")}
     </div>
   `;
 }
@@ -1341,43 +1356,9 @@ class GiftListPage {
     this.gifts = config.gifts;
     this.activeGift = null;
     this.lastFocus = null;
-    this.inviteToken = getInviteToken();
-    this.familyName = null;
-    this.db = null;
-    this.firebaseReady = false;
 
     this.render();
     this.bindEvents();
-    this.initFirebase();
-  }
-
-  async initFirebase() {
-    if (!window.isFirebaseConfigured || typeof firebase === "undefined") {
-      return;
-    }
-
-    try {
-      if (!firebase.apps.length) {
-        firebase.initializeApp(window.firebaseConfig);
-      }
-      this.db = firebase.firestore();
-      this.firebaseReady = true;
-
-      if (isValidInviteToken(this.inviteToken)) {
-        const snapshot = await this.db
-          .collection("families")
-          .doc(this.inviteToken)
-          .get();
-        if (snapshot.exists) {
-          this.familyName = snapshot.data().familyName || null;
-        }
-      }
-    } catch (error) {
-      console.error(
-        "Não foi possível inicializar o Firebase na lista de presentes.",
-        error,
-      );
-    }
   }
 
   formatPrice(value) {
@@ -1385,6 +1366,10 @@ class GiftListPage {
       style: "currency",
       currency: "BRL",
     });
+  }
+
+  formatGiftPrice(gift) {
+    return gift.priceLabel || this.formatPrice(gift.price);
   }
 
   render() {
@@ -1396,14 +1381,14 @@ class GiftListPage {
           class="gift-card"
           type="button"
           data-gift-index="${index}"
-          aria-label="${gift.title}, ${this.formatPrice(gift.price)}"
+          aria-label="${escapeHtml(gift.title)}, ${escapeHtml(this.formatGiftPrice(gift))}"
         >
           <span class="gift-card-media">
             <img src="${gift.image}" alt="${gift.title}" loading="lazy">
           </span>
           <span class="gift-card-body">
             <span class="gift-card-title">${gift.title}</span>
-            <span class="gift-card-price">${this.formatPrice(gift.price)}</span>
+            <span class="gift-card-price">${escapeHtml(this.formatGiftPrice(gift))}</span>
           </span>
         </button>
       `,
@@ -1448,11 +1433,6 @@ class GiftListPage {
         return;
       }
 
-      if (event.target.closest("[data-gift-message-submit]")) {
-        this.submitMessage();
-        return;
-      }
-
       if (event.target.closest("[data-pix-copy]")) {
         event.preventDefault();
         this.copyPixCode(event.target.closest("[data-pix-copy]"));
@@ -1461,13 +1441,6 @@ class GiftListPage {
 
       if (event.target.closest("[data-modal-close]")) {
         this.closeModal();
-      }
-    });
-
-    this.container.addEventListener("submit", (event) => {
-      if (event.target.matches("[data-gift-message-form]")) {
-        event.preventDefault();
-        this.submitMessage();
       }
     });
 
@@ -1595,14 +1568,7 @@ class GiftListPage {
     const paymentLink = String(gift.paymentLink || "").trim();
 
     if (!paymentLink) {
-      return `
-        <section class="gift-modal-section gift-modal-section--card is-disabled" aria-label="${escapeHtml(mercadoPago.sectionTitle)}">
-          <div class="gift-modal-section-head">
-            <h3 class="gift-modal-section-title">${escapeHtml(mercadoPago.sectionTitle)}</h3>
-            <p class="gift-modal-section-hint">Em breve disponível</p>
-          </div>
-        </section>
-      `;
+      return "";
     }
 
     return `
@@ -1623,51 +1589,24 @@ class GiftListPage {
     `;
   }
 
-  renderMessageForm(gift) {
-    const { message } = this.gifts;
-
-    return `
-      <section class="gift-modal-section gift-modal-section--message" aria-label="${escapeHtml(message.sectionTitle)}">
-        <div class="gift-modal-section-head">
-          <h3 class="gift-modal-section-title">${escapeHtml(message.sectionTitle)}</h3>
-          <p class="gift-modal-section-hint">${escapeHtml(message.sectionHint)}</p>
-        </div>
-        <form class="gift-message-form" data-gift-message-form novalidate>
-          <label class="visually-hidden" for="gift-message-input">${escapeHtml(message.sectionTitle)}</label>
-          <textarea
-            id="gift-message-input"
-            class="gift-message-input"
-            rows="4"
-            maxlength="500"
-            placeholder="${escapeHtml(message.placeholder)}"
-            required
-          ></textarea>
-          <p class="gift-message-feedback" id="gift-message-feedback" hidden></p>
-          <button class="rsvp-button rsvp-submit gift-message-submit" type="submit" data-gift-message-submit>
-            ${escapeHtml(message.submitLabel)}
-          </button>
-        </form>
-      </section>
-    `;
-  }
-
   openModal(gift) {
     if (!gift) return;
 
     this.activeGift = gift;
     this.lastFocus = document.activeElement;
+    const cardPayment = this.renderCardPayment(gift);
 
     this.modalContent.innerHTML = `
       <p class="gift-modal-kicker">${escapeHtml(gift.title)}</p>
-      <p class="gift-modal-amount">${this.formatPrice(gift.price)}</p>
+      <p class="gift-modal-amount">${escapeHtml(this.formatGiftPrice(gift))}</p>
 
       ${this.renderPixPayment(gift)}
 
-      <p class="gift-modal-divider" aria-hidden="true">ou</p>
-
-      ${this.renderCardPayment(gift)}
-
-      ${this.renderMessageForm(gift)}
+      ${
+        cardPayment
+          ? `<p class="gift-modal-divider" aria-hidden="true">ou</p>${cardPayment}`
+          : ""
+      }
     `;
 
     this.modal.removeAttribute("hidden");
@@ -1676,71 +1615,6 @@ class GiftListPage {
 
     const closeButton = this.modal.querySelector(".gift-modal-close");
     closeButton?.focus();
-  }
-
-  setMessageFeedback(text, type = "") {
-    const feedback = this.modalContent.querySelector("#gift-message-feedback");
-    if (!feedback) return;
-
-    feedback.textContent = text;
-    feedback.hidden = !text;
-    feedback.classList.remove("is-error", "is-success");
-    if (type) {
-      feedback.classList.add(type);
-    }
-  }
-
-  async submitMessage() {
-    if (!this.activeGift) return;
-
-    const { message } = this.gifts;
-    const textarea = this.modalContent.querySelector("#gift-message-input");
-    const submitButton = this.modalContent.querySelector(
-      "[data-gift-message-submit]",
-    );
-    const messageText = textarea?.value.trim() || "";
-
-    if (!messageText) {
-      this.setMessageFeedback(message.empty, "is-error");
-      textarea?.focus();
-      return;
-    }
-
-    if (!this.firebaseReady || !this.db) {
-      this.setMessageFeedback(message.unavailable, "is-error");
-      return;
-    }
-
-    const familyToken = isValidInviteToken(this.inviteToken)
-      ? this.inviteToken
-      : "anonymous";
-
-    submitButton.disabled = true;
-    this.setMessageFeedback("");
-
-    try {
-      const payload = {
-        message: messageText,
-        giftTitle: this.activeGift.title,
-        giftPrice: Number(this.activeGift.price),
-        familyToken,
-        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-      };
-
-      if (this.familyName) {
-        payload.familyName = this.familyName;
-      }
-
-      await this.db.collection("giftMessages").add(payload);
-
-      textarea.value = "";
-      this.setMessageFeedback(message.success, "is-success");
-    } catch (error) {
-      console.error("Não foi possível enviar a mensagem de presente.", error);
-      this.setMessageFeedback(message.error, "is-error");
-    } finally {
-      submitButton.disabled = false;
-    }
   }
 
   closeModal() {
@@ -1753,6 +1627,127 @@ class GiftListPage {
 
     if (this.lastFocus && typeof this.lastFocus.focus === "function") {
       this.lastFocus.focus();
+    }
+  }
+}
+
+/* ============================================================
+   PAGINA DE MENSAGENS
+   ============================================================ */
+class MessagePage {
+  constructor(container, config) {
+    this.container = container;
+    this.config = config;
+    this.page = config.messages;
+    this.inviteToken = getInviteToken();
+    this.familyName = null;
+    this.db = null;
+    this.firebaseReady = false;
+
+    this.render();
+    this.bindEvents();
+    this.initFirebase();
+  }
+
+  render() {
+    const { pageTitle, pageSubtitle, intro, placeholder, submitLabel } = this.page;
+    this.container.innerHTML = `
+      ${renderInfoPageChrome(this.config, { pageTitle, pageSubtitle })}
+      <section class="message-page-card" aria-label="Envie sua mensagem">
+        <p class="message-page-intro">${escapeHtml(intro)}</p>
+        <form class="gift-message-form" data-message-form novalidate>
+          <label class="visually-hidden" for="message-input">${escapeHtml(pageTitle)}</label>
+          <textarea
+            id="message-input"
+            class="gift-message-input"
+            rows="7"
+            maxlength="500"
+            placeholder="${escapeHtml(placeholder)}"
+            required
+          ></textarea>
+          <p class="gift-message-feedback" id="message-feedback" hidden role="status"></p>
+          <button class="rsvp-button rsvp-submit gift-message-submit" type="submit">
+            ${escapeHtml(submitLabel)}
+          </button>
+        </form>
+      </section>
+    `;
+  }
+
+  bindEvents() {
+    this.container.addEventListener("submit", (event) => {
+      if (!event.target.matches("[data-message-form]")) return;
+      event.preventDefault();
+      this.submitMessage();
+    });
+  }
+
+  async initFirebase() {
+    if (!window.isFirebaseConfigured || typeof firebase === "undefined") return;
+
+    try {
+      if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+      this.db = firebase.firestore();
+      this.firebaseReady = true;
+
+      if (isValidInviteToken(this.inviteToken)) {
+        const snapshot = await this.db.collection("families").doc(this.inviteToken).get();
+        if (snapshot.exists) this.familyName = snapshot.data().familyName || null;
+      }
+    } catch (error) {
+      console.error("Não foi possível inicializar o Firebase na página de mensagens.", error);
+    }
+  }
+
+  setFeedback(text, type = "") {
+    const feedback = this.container.querySelector("#message-feedback");
+    if (!feedback) return;
+    feedback.textContent = text;
+    feedback.hidden = !text;
+    feedback.classList.remove("is-error", "is-success");
+    if (type) feedback.classList.add(type);
+  }
+
+  async submitMessage() {
+    const textarea = this.container.querySelector("#message-input");
+    const submitButton = this.container.querySelector(".gift-message-submit");
+    const messageText = textarea?.value.trim() || "";
+
+    if (!messageText) {
+      this.setFeedback(this.page.empty, "is-error");
+      textarea?.focus();
+      return;
+    }
+
+    if (!this.firebaseReady || !this.db) {
+      this.setFeedback(this.page.unavailable, "is-error");
+      return;
+    }
+
+    submitButton.disabled = true;
+    this.setFeedback("");
+
+    try {
+      const payload = {
+        message: messageText,
+        giftTitle: this.page.giftTitle,
+        giftPrice: Number(this.page.giftPrice),
+        familyToken: isValidInviteToken(this.inviteToken)
+          ? this.inviteToken
+          : "anonymous",
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      };
+
+      if (this.familyName) payload.familyName = this.familyName;
+
+      await this.db.collection("giftMessages").add(payload);
+      textarea.value = "";
+      this.setFeedback(this.page.success, "is-success");
+    } catch (error) {
+      console.error("Não foi possível enviar a mensagem.", error);
+      this.setFeedback(this.page.error, "is-error");
+    } finally {
+      submitButton.disabled = false;
     }
   }
 }
@@ -2001,6 +1996,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const giftsApp = document.getElementById("gifts-app");
   if (giftsApp) {
     new GiftListPage(giftsApp, weddingConfig);
+  }
+
+  const messagesApp = document.getElementById("messages-app");
+  if (messagesApp) {
+    new MessagePage(messagesApp, weddingConfig);
   }
 
   const dressApp = document.getElementById("dress-app");
